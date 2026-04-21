@@ -1,9 +1,8 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace MyClass.Tables;
 
-public class Tables
+public class Product
 {
     public int Id { get; set; }
     public string ItemNum { get; set; } = "";
@@ -16,11 +15,19 @@ public class Tables
 
 internal class ProductDbContext : DbContext
 {
-    public DbSet<Tables> Products { get; set; }
+    public DbSet<Product> Products { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {   // Next Step: Needs docker access
-        optionsBuilder.UseSqlServer(@"Server=SERVER_NAME;Database=DATABASE_NAME;Trusted_Connection=True;TrustServerCertificate=True;");
+    {
+        string? password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new Exception("DB_PASSWORD environment variable is not set.");
+        }
+
+        optionsBuilder.UseSqlServer(
+            $@"Server=localhost,1433;Database=ProductDB;User Id=sa;Password={password};TrustServerCertificate=True;");
     }
 }
 
@@ -30,6 +37,7 @@ internal class Program
     {
         using (ProductDbContext context = new ProductDbContext())
         {
+            Console.WriteLine("Ready for migrations...");
         }
     }
 }
